@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <defs>
+    <linearGradient id="body" x1=".12" y1="0" x2=".82" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#f8f8ff"/><stop offset=".1" stop-color="#75757e"/><stop offset=".19" stop-color="#060609"/><stop offset=".38" stop-color="#bfc1ca"/><stop offset=".48" stop-color="#f7f8ff"/><stop offset=".53" stop-color="#313139"/><stop offset=".66" stop-color="#08080d"/><stop offset=".8" stop-color="#62636f"/><stop offset=".91" stop-color="#f5f6ff"/><stop offset="1" stop-color="#25252c"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fafaff"/><stop offset=".28" stop-color="#31313a"/><stop offset=".53" stop-color="#f5f5fc"/><stop offset=".72" stop-color="#15151c"/><stop offset="1" stop-color="#fafaff"/></linearGradient>
+    <linearGradient id="prism" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#69d7ff"/><stop offset=".31" stop-color="#a537fa"/><stop offset=".63" stop-color="#ef3fd4"/><stop offset=".84" stop-color="#ff995d"/><stop offset="1" stop-color="#fff7dd"/></linearGradient>
+    <radialGradient id="face" cx=".35" cy=".23" r=".8"><stop stop-color="#45454f"/><stop offset=".39" stop-color="#17171e"/><stop offset=".82" stop-color="#0a0a10"/><stop offset="1" stop-color="#393941"/></radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".5"/></filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M80 8C115 4 148 20 151 56C153 78 139 87 143 111C146 132 132 151 108 147C93 145 91 153 70 151C46 149 49 139 31 134C9 127 5 112 10 92C15 71 4 64 10 43C17 18 46 11 80 8Z" fill="url(#body)" stroke="url(#edge)" stroke-width="2"/>
+    <path d="M79 27C108 23 132 38 132 63C133 81 125 88 128 106C131 123 118 134 100 131C84 129 80 137 63 130C48 123 45 127 32 116C19 104 29 88 27 71C24 45 39 31 79 27Z" fill="url(#face)" stroke="#cecfda" stroke-opacity=".36"/>
+    <path d="M24 43C35 22 86 14 115 24C93 18 42 35 24 43Z" fill="#fff"/>
+    <path d="M14 68C18 47 21 50 18 77C14 98 19 114 30 125C15 122 9 104 14 68Z" fill="#e5f5ff"/>
+    <path d="M139 51C151 75 128 87 137 112C142 133 125 143 107 140C135 137 131 120 128 104C125 88 142 70 139 51Z" fill="url(#prism)"/>
+    <path d="M30 127C49 144 68 139 83 144C100 148 106 138 120 140C104 153 88 151 73 148C54 144 41 149 30 127Z" fill="url(#prism)"/>
+    <path d="M130 31C140 37 145 48 143 59C140 47 133 41 130 31Z" fill="#fff"/>
+  </g>
+</svg>
