@@ -11,6 +11,8 @@ function doPost(e) {
     if (!e || !e.postData || e.postData.contents.length > 5000000) throw new Error('請求內容不正確或過大。');
     const request = JSON.parse(e.postData.contents);
     if (typeof request.token !== 'string' || request.token !== token) throw new Error('同步密語不正確。');
+    if (request.action === 'transfer.list') return json(listTransfers(request, props));
+    if (request.action === 'transfer.start') return json(startTransfer(request, props));
     if (request.action === 'calendar.list') return json(listCalendarEvents(request, props));
     if (request.action === 'calendar.create') return json(createCalendarEvent(request, props));
     if (!sheetId) throw new Error('請先設定 SPREADSHEET_ID。');
@@ -76,7 +78,7 @@ function sameContent(a, b) {
   return ['id', 'title', 'body', 'summary', 'url', 'tags', 'archived', 'createdAt', 'updatedAt', 'manual', 'aiStatus', 'aiError'].every(k => JSON.stringify(a[k]) === JSON.stringify(b[k]));
 }
 function json(value) { return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return json({ ok: true, service: 'FLUX', version: 3, revision: '0.3.1', capabilities: ['sync', 'calendar.list', 'calendar.create'] }); }
+function doGet() { return json({ ok: true, service: 'FLUX', version: 3, revision: '0.7.0', capabilities: ['sync', 'calendar.list', 'calendar.create', 'transfer.list', 'transfer.start'] }); }
 
 function calendarService() {
   if (typeof Calendar === 'undefined') throw new Error('請在 Apps Script 的「服務」啟用 Google Calendar API，執行 authorizeCalendar 完成授權，再部署新版本。');
@@ -150,4 +152,48 @@ function calendarDay(value) {
   const date = new Date(value + 'T00:00:00.000Z');
   if (!Number.isFinite(+date) || date.toISOString().slice(0,10) !== value) throw new Error('行程日期不存在。');
   return date;
+}
+
+
+// Files are sent directly to Drive in chunks; no binary data passes through this script.
+function transferDrive(path, options) {
+  const response=UrlFetchApp.fetch('https://www.googleapis.com/'+path,{method:'get',muteHttpExceptions:true,...options,headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken(),...(options?.headers||{})}});
+  const code=response.getResponseCode();
+  if(code<200||code>=300)throw new Error('Drive 連線失敗（HTTP '+code+'）。請確認 Drive 授權、API 啟用與儲存空間。');
+  return response;
+}
+function transferFolder(props) {
+  const id=props.getProperty('TRANSFER_FOLDER_ID');
+  if(!id || !/^[A-Za-z0-9_-]{1,200}$/.test(id))throw new Error('請先在 Apps Script 執行 authorizeTransfers，建立私人互傳資料夾，再重新部署。');
+  return id;
+}
+function authorizeTransfers() {
+  const props=PropertiesService.getScriptProperties();
+  const existing=props.getProperty('TRANSFER_FOLDER_ID');
+  if(existing){transferDrive('drive/v3/files/'+encodeURIComponent(transferFolder(props))+'?fields=id');}
+  else {
+    const response=transferDrive('drive/v3/files?fields=id',{method:'post',contentType:'application/json',payload:JSON.stringify({name:'FLUX 中轉站',mimeType:'application/vnd.google-apps.folder'})});
+    const folder=JSON.parse(response.getContentText());props.setProperty('TRANSFER_FOLDER_ID',folder.id);
+  }
+  console.log('私人互傳資料夾已就緒。請重新部署網頁應用程式為新版本。');
+}
+function listTransfers(request,props) {
+  const folder=transferFolder(props);
+  if(request.pageToken!==undefined&&(typeof request.pageToken!=='string'||request.pageToken.length>2048))throw new Error('清單分頁不正確。');
+  const query="'"+folder+"' in parents and trashed = false and appProperties has { key='fluxTransfer' and value='1' }";
+  const params='q='+encodeURIComponent(query)+'&pageSize=50&orderBy=createdTime%20desc&fields='+encodeURIComponent('nextPageToken,files(id,name,size,mimeType,createdTime,webContentLink,webViewLink)')+(request.pageToken?'&pageToken='+encodeURIComponent(request.pageToken):'');
+  const data=JSON.parse(transferDrive('drive/v3/files?'+params).getContentText());
+  return {ok:true,files:data.files||[],nextPageToken:data.nextPageToken||''};
+}
+function startTransfer(request,props) {
+  const folder=transferFolder(props),file=request.file;
+  if(!file||typeof file.name!=='string'||!file.name.trim()||file.name.length>240||/[\x00-\x1f]/.test(file.name)||!Number.isSafeInteger(file.size)||file.size<1||file.size>20*1024*1024*1024)throw new Error('請選擇 1 byte～20 GB 的檔案，檔名最多 240 字。');
+  const mime=typeof file.type==='string'&&/^[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+$/.test(file.type)&&!file.type.startsWith('application/vnd.google-apps.')?file.type:'application/octet-stream';
+  const headers={'X-Upload-Content-Type':mime,'X-Upload-Content-Length':String(file.size)};
+  if(request.origin==='null'||(typeof request.origin==='string'&&/^https?:\/\/[^/\s?#]{1,250}$/.test(request.origin)))headers.Origin=request.origin;
+  const response=transferDrive('upload/drive/v3/files?uploadType=resumable&fields=id,name,size',{method:'post',contentType:'application/json',headers,payload:JSON.stringify({name:file.name,parents:[folder],mimeType:mime,appProperties:{fluxTransfer:'1'}})});
+  const responseHeaders=response.getAllHeaders(),key=Object.keys(responseHeaders).find(k=>k.toLowerCase()==='location');
+  const uploadUrl=key&&String(responseHeaders[key]);
+  if(!uploadUrl||!/^https:\/\/www\.googleapis\.com\/upload\/drive\/v3\/files(?:\?|\/)/.test(uploadUrl))throw new Error('Google 未提供有效的上傳連線。');
+  return {ok:true,uploadUrl};
 }

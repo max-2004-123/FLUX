@@ -1,3 +1,5 @@
+import {mountTransfers} from './transfer-ui.mjs';
+import {transferRequest} from './transfer-core.mjs';
 import {NotesStore, DATA_KEY, DEFAULT_MODEL, organize, synchronize, syncURL} from './core.js';
 import {mountCalendar} from './calendar-ui.js';
 const $ = id => document.getElementById(id);
@@ -6,6 +8,8 @@ let store, view = 'capture', selectedTag = '', editingId = null, editorDirty = f
 let settings = {model:DEFAULT_MODEL,autoAI:true,autoSync:true,syncUrl:'',remember:false,geminiKey:'',syncToken:''};
 const working = new Set();
 let aiQueue = Promise.resolve();
+const transfers=mountTransfers({request:(action,payload)=>transferRequest(settings,action,payload),openLink:url=>window.open(url,'_blank','noopener,noreferrer')});
+$('transfers-open').onclick=()=>transfers.open();$('transfers-nav').onclick=()=>transfers.open();
 const calendar = mountCalendar({settings:()=>settings,toast,report});
 function toast(message, error = false, persistent = false) {
   clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error',error); $('toast').hidden = false;
@@ -46,13 +50,13 @@ function updateStatus() {
   $('ai-capture-hint').textContent = settings.geminiKey ? (settings.autoAI ? '收錄後自動整理標題、摘要與標籤。隨時可以修改。' : '已連上 Gemini。開啟紀錄，按「AI 整理」即可。') : '連上 Gemini，讓標題、摘要與標籤自動成形。';
 }
 function switchView(next, focus = false) {
-  view = ['capture','library','archive','calendar','settings'].includes(next) ? next : 'capture';
-  for (const name of ['capture','library','calendar','settings']) $('view-'+name).hidden = (view === 'archive' ? 'library' : view) !== name;
+  view = ['capture','library','archive','trash','calendar','settings'].includes(next) ? next : 'capture';
+  for (const name of ['capture','library','calendar','settings']) $('view-'+name).hidden = (['archive','trash'].includes(view) ? 'library' : view) !== name;
   document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === view));
-  const title = {capture:'快速收錄',library:'所有紀錄',archive:'封存紀錄',calendar:'今日行程',settings:'設定與連線'}[view];
+  const title = {capture:'快速收錄',library:'所有紀錄',archive:'封存紀錄',trash:'垃圾桶',calendar:'今日行程',settings:'設定與連線'}[view];
   $('breadcrumb').replaceChildren(document.createTextNode('工作區 '),Object.assign(document.createElement('span'),{textContent:'/'}),document.createTextNode(' '+title));
-  $('library-title').firstChild.textContent = view === 'archive' ? '封存紀錄' : '所有紀錄';
-  $('library-description').textContent = view === 'archive' ? '留在這裡，需要時隨時還原。' : '每一個想法，都能接著往下走。';
+  $('library-title').firstChild.textContent = view === 'trash' ? '垃圾桶' : view === 'archive' ? '封存紀錄' : '所有紀錄';
+  $('library-description').textContent = view === 'trash' ? '已刪除的紀錄可在這裡還原；刪除狀態會同步。' : view === 'archive' ? '留在這裡，需要時隨時還原。' : '每一個想法，都能接著往下走。';
   history.replaceState(null,'','#'+view);
   render();
   if(view === 'calendar')void calendar.refresh();
@@ -80,11 +84,11 @@ function empty(target, mode) {
 function render() {
   if (!store) return;
   try {
-    const notes=store.all().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)), active=notes.filter(n=>!n.archived);
+    const notes=store.all().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)), active=notes.filter(n=>!n.archived&&!n.manual?.deleted);
     $('side-count').textContent=active.length; $('recent-count').textContent=String(active.length).padStart(2,'0');
     $('recent-list').replaceChildren(...active.slice(0,3).map(card)); if(!active.length)empty($('recent-list'),'new');
-    if(view!=='library' && view!=='archive')return;
-    let matches=notes.filter(n=>n.archived === (view==='archive'));
+    if(!['library','archive','trash'].includes(view))return;
+    let matches=notes.filter(n=>view==='trash'?Boolean(n.manual?.deleted):!n.manual?.deleted && n.archived === (view==='archive'));
     $('library-count').textContent=String(matches.length).padStart(2,'0');
     const tags=[...new Set(matches.flatMap(n=>n.tags))].sort((a,b)=>a.localeCompare(b));
     if(!tags.includes(selectedTag))selectedTag='';
@@ -108,6 +112,7 @@ function capture(event) {
 }
 function fillEditor(note){
   $('edit-title').value=note.title;$('edit-body').value=note.body;$('edit-summary').value=note.summary;$('edit-tags').value=note.tags.join('，');
+  $('delete-note').textContent=note.manual?.deleted?'還原紀錄':'刪除紀錄';$('archive-note').hidden=Boolean(note.manual?.deleted);
   $('archive-note').textContent=note.archived?'還原紀錄':'封存';$('ai-note').disabled=working.has(note.id)||note.archived;$('ai-note').textContent=working.has(note.id)?'整理中…':'AI 整理';$('calendar-note').disabled=note.archived;
   const p=$('editor-meta');p.replaceChildren(document.createTextNode(`建立於 ${new Date(note.createdAt).toLocaleString('zh-TW')} · ${note.dirty?'待同步':'已同步'}`));
   if(note.url){const a=el('a','text-link','開啟原始連結 ↗');a.href=note.url;a.target='_blank';a.rel='noopener noreferrer';p.append(document.createElement('br'),a);}
@@ -176,6 +181,7 @@ $('forget-secrets').addEventListener('click',()=>{try{localStorage.removeItem(SE
 $('close-dialog').addEventListener('click',closeEditor);$('note-dialog').addEventListener('cancel',e=>{e.preventDefault();closeEditor();});
 $('edit-form').addEventListener('input',()=>{editorDirty=true;});
 $('edit-form').addEventListener('submit',e=>{e.preventDefault();try{const saved=saveEditor();editorDirty=false;closeEditor();render();toast('修改已儲存。');calendar.offer(saved);if(settings.autoSync&&navigator.onLine)void sync(true);}catch(error){report(error);}});
+$('delete-note').addEventListener('click',()=>{try{const n=store.get(editingId);if(!n)return;store.trash(n.id,!n.manual?.deleted);editorDirty=false;closeEditor();render();toast(n.manual?.deleted?'紀錄已還原。':'已移到垃圾桶，可隨時還原。');if(settings.autoSync&&navigator.onLine)void sync(true);}catch(e){report(e);}});
 $('archive-note').addEventListener('click',()=>{try{const n=saveEditor();if(!n)return;store.change(n.id,{archived:!n.archived});editorDirty=false;closeEditor();render();toast(n.archived?'紀錄已還原。':'紀錄已封存，可在封存頁還原。');if(settings.autoSync&&navigator.onLine)void sync(true);}catch(e){report(e);}});
 $('ai-note').addEventListener('click',()=>{if(!settings.geminiKey){toast('先到設定貼上 Gemini API 金鑰。',true);return;}if(!navigator.onLine){toast('AI 整理需要網路連線。',true);return;}try{const n=saveEditor();if(n){fillEditor(n);queueAI(n);toast('原文已保存，開始整理。');}}catch(e){report(e);}});
 $('calendar-note').addEventListener('click',()=>{try{const n=saveEditor();if(!n)return;editorDirty=false;closeEditor();render();calendar.open(n);if(settings.autoSync&&navigator.onLine)void sync(true);}catch(e){report(e);}});

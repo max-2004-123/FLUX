@@ -8,7 +8,7 @@ const urlIn = body => body.match(/https?:\/\/[^\s<>"'）)]+/i)?.[0] || '';
 const touch = n => Object.assign(n, {updatedAt: now(), localRevision: (n.localRevision || 0) + 1, dirty: true});
 export function validateNote(n) {
   if (!n || typeof n.id !== 'string' || !n.id || n.id.length > 100 || typeof n.body !== 'string' || !n.body.trim() || n.body.length > 30000 || typeof n.title !== 'string' || n.title.length > 160 || typeof n.summary !== 'string' || n.summary.length > 5000 || !Array.isArray(n.tags) || n.tags.length > 12 || n.tags.some(t => typeof t !== 'string' || t.length > 30) || !Number.isInteger(n.cloudVersion) || n.cloudVersion < 0 || !Number.isFinite(Date.parse(n.createdAt)) || !Number.isFinite(Date.parse(n.updatedAt))) throw new Error('紀錄格式不正確，原有資料已保留。');
-  return {id: n.id, body: n.body, title: n.title, summary: n.summary, tags: cleanTags(n.tags), url: urlIn(n.body), createdAt: n.createdAt, updatedAt: n.updatedAt, cloudVersion: n.cloudVersion, archived: !!n.archived, manual: {title: !!n.manual?.title, summary: !!n.manual?.summary, tags: !!n.manual?.tags}, aiStatus: ['done','error','pending'].includes(n.aiStatus) ? n.aiStatus : 'pending', aiError: String(n.aiError || '').slice(0, 1000), dirty: !!n.dirty, localRevision: Number.isInteger(n.localRevision) ? n.localRevision : 1};
+  return {id: n.id, body: n.body, title: n.title, summary: n.summary, tags: cleanTags(n.tags), url: urlIn(n.body), createdAt: n.createdAt, updatedAt: n.updatedAt, cloudVersion: n.cloudVersion, archived: !!n.archived, manual: {...(n.manual && typeof n.manual === 'object' && !Array.isArray(n.manual) ? n.manual : {}), title: !!n.manual?.title, summary: !!n.manual?.summary, tags: !!n.manual?.tags}, aiStatus: ['done','error','pending'].includes(n.aiStatus) ? n.aiStatus : 'pending', aiError: String(n.aiError || '').slice(0, 1000), dirty: !!n.dirty, localRevision: Number.isInteger(n.localRevision) ? n.localRevision : 1};
 }
 export class NotesStore {
   constructor(storage) { this.storage = storage; this.read(); }
@@ -56,6 +56,11 @@ export class NotesStore {
     });
   }
   change(id, patch) { return this.transaction(notes => { const n = notes.find(n => n.id === id); if (!n) throw new Error('找不到這則紀錄。'); Object.assign(n, patch); return touch(n); }); }
+  trash(id, deleted=true) {
+    const n=this.get(id);if(!n)throw new Error('找不到這則紀錄。');
+    if(Boolean(n.manual?.deleted)===deleted)return n;
+    return this.change(id,{archived:deleted?true:Boolean(n.manual?.beforeTrashArchived),manual:{...n.manual,deleted,beforeTrashArchived:deleted?n.archived:n.manual?.beforeTrashArchived}});
+  }
   applyAI(snapshot, result) {
     return this.transaction(notes => {
       const n = notes.find(n => n.id === snapshot.id);
