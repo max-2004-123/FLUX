@@ -52,7 +52,7 @@ export async function calendarRequest(action,payload,settings,fetcher=fetch) {
   if(action==='calendar.create'&&(!data.event||typeof data.event.id!=='string'))throw new Error('新增行程回應不完整，請用同一則筆記重試。');
   return data;
 }
-export async function proposeEvent(note,settings,fetcher=fetch,reference=new Date()) {
+export async function proposeEvent(note,settings,fetcher=fetch,reference=new Date(),onUsage=()=>{}) {
   if(!settings.geminiKey)throw new Error('尚未填入 Gemini API 金鑰。你也可以直接手動填寫行程，不需要 AI。');
   const model=settings.model||DEFAULT_MODEL;if(!/^[a-zA-Z0-9._-]+$/.test(model))throw new Error('模型名稱格式不正確。');
   let response;
@@ -60,7 +60,7 @@ export async function proposeEvent(note,settings,fetcher=fetch,reference=new Dat
   catch{throw new Error('AI 連線失敗，草稿仍保留，可手動填寫。');}
   if(!response.ok)throw new Error(response.status===429?'AI 額度或頻率已達限制，可改用手動填寫。':'AI 無法整理，請檢查模型與金鑰，或手動填寫。');
   let result;
-  try{const data=await response.json();result=JSON.parse(data.candidates?.[0]?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join(''));}catch{throw new Error('AI 回傳的行程草稿不完整，請手動確認。');}
+  try{const data=await response.json();try{onUsage(data.usageMetadata);}catch{}result=JSON.parse(data.candidates?.[0]?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join(''));}catch{throw new Error('AI 回傳的行程草稿不完整，請手動確認。');}
   if(!result||['title','start','end','location','description','warning'].some(k=>typeof result[k]!=='string'))throw new Error('AI 行程草稿格式不正確，原有輸入已保留。');
   for(const key of ['start','end'])if(result[key])(/^\d{4}-\d{2}-\d{2}$/.test(result[key])?calendarDate:parseLocal)(result[key]);
   if(result.start&&result.end){const allDay=result.start.length===10;if((result.end.length===10)!==allDay)throw new Error('AI 日期與時間格式不一致，請手動填寫。');if(allDay?calendarDate(result.end)<calendarDate(result.start):parseLocal(result.end)<=parseLocal(result.start))throw new Error('AI 的結束時間早於開始時間，請手動填寫。');}

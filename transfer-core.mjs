@@ -22,7 +22,7 @@ export async function uploadChunks(file,url,{fetcher=fetch,signal,onProgress=()=
  let offset=nextOffset(response,file.size);onProgress(offset);
  while(offset<file.size){
   const end=Math.min(offset+CHUNK_SIZE,file.size);
-  response=await send(`bytes ${offset}-${end-1}/${file.size}`,file.slice(offset,end));
+  response=await send(`bytes ${offset}-${end-1}/${file.size}`,await file.slice(offset,end));
   if(response.ok){onProgress(file.size);return;}
   if(response.status!==308)throw uploadError(response);
   const next=nextOffset(response,file.size);

@@ -1,3 +1,5 @@
+import {mountAdvice} from './model-advice-ui.js';
+import {proposeEvent} from './calendar.js';
 import {mountTransfers} from './transfer-ui.mjs';
 import {transferRequest} from './transfer-core.mjs';
 import {NotesStore, DATA_KEY, DEFAULT_MODEL, organize, synchronize, syncURL} from './core.js';
@@ -10,7 +12,11 @@ const working = new Set();
 let aiQueue = Promise.resolve();
 const transfers=mountTransfers({request:(action,payload)=>transferRequest(settings,action,payload),openLink:url=>window.open(url,'_blank','noopener,noreferrer')});
 $('transfers-open').onclick=()=>transfers.open();$('transfers-nav').onclick=()=>transfers.open();
-const calendar = mountCalendar({settings:()=>settings,toast,report});
+const adviceKey='flux.web.model-advice.v1';
+function adviceHistory(){try{return JSON.parse(localStorage.getItem(adviceKey)||'[]').filter(x=>Date.parse(x.time)>Date.now()-14*86400000).slice(-200);}catch{return [];}}
+function recordAdvice(task,body,model,start,outcome,usage){try{const rows=adviceHistory();rows.push(FluxModelAdvice.observation(task,body,model,Date.now()-start,outcome,usage));localStorage.setItem(adviceKey,JSON.stringify(rows.slice(-200)));}catch{}}
+const advice=mountAdvice({history:async()=>adviceHistory(),clear:async()=>localStorage.removeItem(adviceKey)});
+const calendar = mountCalendar({settings:()=>settings,toast,report,propose:async(note,connection)=>{const start=Date.now();let usage,outcome='error';try{const result=await proposeEvent(note,connection,fetch,new Date(),u=>usage=u);outcome='ok';return result;}finally{recordAdvice('calendarExtract',note.body,connection.model||DEFAULT_MODEL,start,outcome,usage);}}});
 function toast(message, error = false, persistent = false) {
   clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error',error); $('toast').hidden = false;
   if (!persistent) toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 9000 : 4200);
@@ -131,8 +137,10 @@ function queueAI(snapshot){
   const connection={...settings};
   aiQueue=aiQueue.then(async()=>{
     const latest=store.get(snapshot.id);if(!latest || latest.body!==snapshot.body || latest.archived)return;
-    try{const result=await organize(snapshot,connection);const applied=store.applyAI(snapshot,result);if(applied){toast('AI 整理完成。');calendar.offer(store.get(snapshot.id));}}
+    let usage,outcome='error';const started=Date.now();
+    try{const result=await organize(snapshot,connection,fetch,u=>usage=u);outcome='ok';const applied=store.applyAI(snapshot,result);if(applied){toast('AI 整理完成。');calendar.offer(store.get(snapshot.id));}}
     catch(e){const n=store.get(snapshot.id);if(n && n.body===snapshot.body && !n.archived)store.change(n.id,{aiStatus:'error',aiError:e.message});report(e);}
+    finally{recordAdvice('organize',snapshot.body,connection.model||DEFAULT_MODEL,started,outcome,usage);}
   }).catch(report).finally(()=>{
     working.delete(snapshot.id);render();if(editingId===snapshot.id && !editorDirty){const n=store.get(snapshot.id);if(n)fillEditor(n);}else if(editingId===snapshot.id)$('ai-note').disabled=false;
     if(settings.autoSync && settings.syncUrl && settings.syncToken && navigator.onLine)void sync(true);

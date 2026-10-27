@@ -19,27 +19,30 @@ export function mountTransfers({request,openLink}){
    for(const f of data.files){const row=node('article','transfer-file'),info=node('div');info.append(node('strong','',f.name||'未命名檔案'),node('small','',sizeLabel(Number(f.size)||0)+' · '+new Date(f.createdTime).toLocaleString('zh-TW')));row.append(info);const actions=node('div','transfer-file-actions');const view=safeDriveLink(f.webViewLink),download=safeDriveLink(f.webContentLink);if(view)actions.append(link('開啟',view));if(download)actions.append(link('下載',download));row.append(actions);list.append(row);}
    pageToken=data.nextPageToken||'';more.hidden=!pageToken;status.textContent=list.children.length?'已更新 · 檔案不會自動刪除':'尚無檔案。從這台設備上傳第一個檔案。';
   }catch(e){status.textContent=errorText(e);}finally{loading=false;refresh.disabled=false;more.disabled=false;}}
- function renderJob(job){job.progress.value=job.sent;job.detail.textContent=job.message+' · '+sizeLabel(job.sent)+' / '+sizeLabel(job.file.size);job.button.hidden=job.state==='done';job.button.textContent=job.state==='sending'?'暫停':job.state==='queued'?'移出佇列':'繼續';}
+ function renderJob(job){job.progress.value=job.sent;job.detail.textContent=job.message+' · '+sizeLabel(job.sent)+' / '+sizeLabel(job.file.size);job.button.hidden=['done','cancelled','cancelling'].includes(job.state);job.button.textContent=job.state==='sending'?'暫停':job.state==='queued'?'移出佇列':'繼續';job.cancel.hidden=job.state==='done';job.cancel.disabled=job.state==='cancelling';job.cancel.textContent=job.state==='cancelled'?'移除':'取消';}
  async function drain(){if(running)return;running=true;
   try{for(let job;job=jobs.find(j=>j.state==='queued');){job.state='sending';job.controller=new AbortController();job.message='準備上傳';renderJob(job);
     try{if(!job.url){const response=await request('transfer.start',{file:{name:job.file.name,size:job.file.size,type:job.file.type},origin:location.origin});job.url=response.uploadUrl;}
+     if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');
      await uploadChunks(job.file,job.url,{signal:job.controller.signal,onProgress:sent=>{job.sent=sent;job.message='上傳中';renderJob(job);}});
-     job.state='done';job.message='已送達';job.file={name:job.file.name,size:job.file.size};void load();
-    }catch(e){job.state='paused';job.message=job.controller.signal.aborted?'已暫停':errorText(e);if(e.expired)job.url=null;}
+     if(job.cancelRequested){job.state='cancelled';job.message='已取消；若剛好送達，請檢查共用收件匣';void job.file.release?.();job.file={name:job.file.name,size:job.file.size};renderJob(job);void load();continue;}
+     job.state='done';job.message='已送達';void job.file.release?.();job.file={name:job.file.name,size:job.file.size};void load();
+    }catch(e){if(job.cancelRequested){job.state='cancelled';job.message='已取消；若剛好送達，請檢查共用收件匣';void job.file.release?.();job.file={name:job.file.name,size:job.file.size};void load();}else{job.state='paused';job.message=job.controller.signal.aborted?'已暫停':errorText(e);if(e.expired)job.url=null;}}
     renderJob(job);
   }}finally{running=false;}}
  function add(files){for(const file of Array.from(files)){
-  if(jobs.filter(j=>j.state!=='done').length>=10){status.textContent='一次最多保留 10 個待傳檔案。';break;}
-  if(!file.size||file.size>20*1024**3||file.name.length>240){status.textContent='略過 '+file.name+'：需為 1 byte～20 GB，檔名最多 240 字。';continue;}
-  const row=node('article','transfer-job'),title=node('strong','',file.name),detail=node('small'),progress=node('progress');progress.max=file.size;progress.value=0;progress.setAttribute('aria-label',file.name+' 上傳進度');const button=node('button','','暫停');
-  const job={file,row,detail,progress,button,sent:0,state:'queued',message:'等待上傳'};button.onclick=()=>{if(job.state==='sending')job.controller.abort();else if(job.state==='queued'){jobs.splice(jobs.indexOf(job),1);row.remove();}else{job.state='queued';job.message='等待續傳';renderJob(job);void drain();}};
-  row.append(title,detail,progress,button);jobsRoot.append(row);jobs.push(job);renderJob(job);
+  if(jobs.filter(j=>!['done','cancelled'].includes(j.state)).length>=10){status.textContent='一次最多保留 10 個待傳檔案。';void file.release?.();continue;}
+  if(!file.size||file.size>20*1024**3||file.name.length>240){status.textContent='略過 '+file.name+'：需為 1 byte～20 GB，檔名最多 240 字。';void file.release?.();continue;}
+  const row=node('article','transfer-job'),title=node('strong','',file.name),detail=node('small'),progress=node('progress');progress.max=file.size;progress.value=0;progress.setAttribute('aria-label',file.name+' 上傳進度');const button=node('button','','暫停'),cancel=node('button','transfer-cancel','取消'),actions=node('div','transfer-job-actions');cancel.type='button';button.type='button';actions.append(button,cancel);
+  const job={file,row,detail,progress,button,cancel,sent:0,state:'queued',message:'等待上傳'};button.onclick=()=>{if(job.state==='sending')job.controller.abort();else if(job.state==='queued'){jobs.splice(jobs.indexOf(job),1);void job.file.release?.();row.remove();}else{job.state='queued';job.message='等待續傳';renderJob(job);void drain();}};
+  cancel.onclick=()=>{if(job.state==='sending'){job.cancelRequested=true;job.state='cancelling';job.message='正在取消';job.controller.abort();renderJob(job);}else if(job.state==='cancelled'){jobs.splice(jobs.indexOf(job),1);row.remove();}else if(['queued','paused'].includes(job.state)){job.state='cancelled';job.message='已取消';void job.file.release?.();job.file={name:job.file.name,size:job.file.size};renderJob(job);}};
+  row.append(title,detail,progress,actions);jobsRoot.append(row);jobs.push(job);renderJob(job);
  }void drain();}
  pick.onclick=()=>input.click();input.onchange=()=>{add(input.files);input.value='';};
  drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag-over');};drop.ondragleave=()=>drop.classList.remove('drag-over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag-over');add(e.dataTransfer.files);};
  dialog.addEventListener('dragover',e=>e.preventDefault());dialog.addEventListener('drop',e=>e.preventDefault());
  refresh.onclick=()=>void load();more.onclick=()=>void load(true);
  const timer=setInterval(()=>{if(dialog.open&&!document.hidden)void load();},30000);
- window.addEventListener('beforeunload',e=>{if(jobs.some(j=>j.state!=='done')){e.preventDefault();e.returnValue='';}});
- return {open(){if(!dialog.open)dialog.showModal();void load();},dialog,add,dispose(){clearInterval(timer);for(const j of jobs)j.controller?.abort();dialog.remove();}};
+ window.addEventListener('beforeunload',e=>{if(jobs.some(j=>!['done','cancelled'].includes(j.state))){e.preventDefault();e.returnValue='';}});
+ return {open(){if(!dialog.open)dialog.showModal();void load();},dialog,add,report(message){status.textContent=message;},dispose(){clearInterval(timer);for(const j of jobs)j.controller?.abort();dialog.remove();}};
 }
