@@ -1,3 +1,4 @@
+import {mountReminders} from './reminder-board.js';
 import {mountAdvice} from './model-advice-ui.js';
 import {proposeEvent} from './calendar.js';
 import {mountTransfers} from './transfer-ui.mjs';
@@ -8,6 +9,7 @@ const $ = id => document.getElementById(id);
 const PREFS = 'flux.web.preferences.v1', SECRETS = 'flux.web.secrets.v1', DRAFT = 'flux.web.draft.v1';
 let store, view = 'capture', selectedTag = '', editingId = null, editorDirty = false, syncBusy = false, toastTimer;
 let settings = {model:DEFAULT_MODEL,autoAI:true,autoSync:true,syncUrl:'',remember:false,geminiKey:'',syncToken:''};
+const reminders=mountReminders({getStore:()=>store,report,changed:()=>{render();if(settings.autoSync&&navigator.onLine)void sync(true);}});
 const working = new Set();
 let aiQueue = Promise.resolve();
 const transfers=mountTransfers({request:(action,payload)=>transferRequest(settings,action,payload),openLink:url=>window.open(url,'_blank','noopener,noreferrer')});
@@ -93,6 +95,7 @@ function render() {
     const notes=store.all().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)), active=notes.filter(n=>!n.archived&&!n.manual?.deleted);
     $('side-count').textContent=active.length; $('recent-count').textContent=String(active.length).padStart(2,'0');
     $('recent-list').replaceChildren(...active.slice(0,3).map(card)); if(!active.length)empty($('recent-list'),'new');
+    $('reminder-section').hidden=view!=='library';reminders.render();
     if(!['library','archive','trash'].includes(view))return;
     let matches=notes.filter(n=>view==='trash'?Boolean(n.manual?.deleted):!n.manual?.deleted && n.archived === (view==='archive'));
     $('library-count').textContent=String(matches.length).padStart(2,'0');
@@ -118,6 +121,7 @@ function capture(event) {
 }
 function fillEditor(note){
   $('edit-title').value=note.title;$('edit-body').value=note.body;$('edit-summary').value=note.summary;$('edit-tags').value=note.tags.join('，');
+  $('restore-reminder').hidden=!note.manual?.reminderRemoved||note.archived||note.manual?.deleted||!note.tags.includes('提醒');
   $('delete-note').textContent=note.manual?.deleted?'還原紀錄':'刪除紀錄';$('archive-note').hidden=Boolean(note.manual?.deleted);
   $('archive-note').textContent=note.archived?'還原紀錄':'封存';$('ai-note').disabled=working.has(note.id)||note.archived;$('ai-note').textContent=working.has(note.id)?'整理中…':'AI 整理';$('calendar-note').disabled=note.archived;
   const p=$('editor-meta');p.replaceChildren(document.createTextNode(`建立於 ${new Date(note.createdAt).toLocaleString('zh-TW')} · ${note.dirty?'待同步':'已同步'}`));
@@ -207,3 +211,5 @@ if(shared){$('capture-body').value=[$('capture-body').value,shared].filter(Boole
 switchView(location.hash.slice(1)||'capture');
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{toast('離線模式尚未啟用，請保持連網使用。',true);});
 if(settings.autoSync&&settings.syncUrl&&settings.syncToken&&navigator.onLine)void sync(true);
+
+$('restore-reminder').addEventListener('click',()=>{try{const n=store.get(editingId);if(!n)return;const restored=store.change(n.id,{manual:{...n.manual,reminderRemoved:false}});$('restore-reminder').hidden=true;render();toast('便利貼已恢復。');if(settings.autoSync&&navigator.onLine)void sync(true);}catch(e){report(e);}});

@@ -1,0 +1,50 @@
+.reminder-section{margin:28px 0 8px}.reminder-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}.reminder-toolbar h2{font-size:14px}.reminder-toolbar h2 span{font-size:10px;color:#a89ab4;margin-left:8px}.reminder-switches{display:flex;gap:15px;font-size:11px;color:#c6bacf}.reminder-switches label{display:flex;align-items:center;gap:6px;cursor:pointer}.reminder-switches input{accent-color:#ba95d0}.reminder-hint{color:#a79aaf;font-size:11px;line-height:1.8;margin:12px 0}.reminder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;padding:4px 0 14px}
+.paper-wrap{position:relative;min-width:0;filter:drop-shadow(0 6px 8px #0005)}
+.paper-note{position:relative;isolation:isolate;aspect-ratio:1;display:flex;flex-direction:column;padding:22px 25px 20px;color:#33323a;color-scheme:light;background:linear-gradient(125deg,#f6f5f3,#e9e8e6);clip-path:polygon(.6% .4%,99.4% 0,100% calc(100% - 25px),calc(100% - 25px) 100%,0 99.4%);border-radius:2px 3px 26px 2px}
+.paper-note::before{content:'';position:absolute;inset:0;z-index:-1;background:url('assets/paper-grain.svg');pointer-events:none;box-shadow:inset 0 1px 2px #fff,inset -1px -2px 3px #b8b5b466}
+.paper-note::after{content:'';position:absolute;bottom:0;right:0;width:29px;height:29px;background:linear-gradient(135deg,#dedbd7 35%,#faf9f7 48%,#b7b2af 51%,#eeece9 80%);clip-path:polygon(0 0,100% 0,0 100%);filter:drop-shadow(-2px -2px 2px #0002);pointer-events:none}
+.paper-clip{position:absolute;left:-3px;top:-6px;z-index:3;width:31px;height:38px;background:radial-gradient(ellipse at 40% 65%,#ae68d377,transparent 60%),url('assets/chrome-orb.svg') center/cover;clip-path:polygon(5% 5%,97% 21%,15% 100%);filter:drop-shadow(0 2px 1px #0007);pointer-events:none}
+.paper-header{display:flex;gap:6px;align-items:center;border-bottom:1px solid #89838b33;padding-bottom:12px;flex-shrink:0;font:10px 'Segoe UI','Microsoft JhengHei',sans-serif;letter-spacing:1px;color:#79737c}
+.paper-brand{font-size:12px;letter-spacing:2px;color:#56505a;margin-right:4px}.paper-header-actions{display:flex;gap:4px;margin-left:auto}
+.paper-note button{color:#716879;background:transparent;border:0;border-radius:4px;padding:3px 5px;font-size:10px;letter-spacing:0}
+.paper-note button:hover{background:#6e566d14;color:#4a314c}.paper-note button:focus-visible{outline:2px solid #896b8b}.paper-note button[aria-pressed=true]{color:#6c4676;background:#80518a10}
+.paper-title{border:0;background:none;text-align:left;font-family:'DFKai-SB','KaiTi','Microsoft JhengHei',serif!important;font-size:23px!important;line-height:1.4;margin:14px 0 9px;padding:0!important;letter-spacing:1px!important;color:#37313c!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;flex-shrink:0}
+.paper-tasks{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#b9afb8 transparent;padding:2px 4px 5px 0}
+.paper-task{display:flex;align-items:flex-start;gap:10px;margin:11px 0;cursor:pointer;font:17px/1.6 'DFKai-SB','KaiTi','Microsoft JhengHei',serif;color:#403842;overflow-wrap:anywhere}.paper-task input{appearance:none;width:17px;height:17px;flex:none;border:1.5px solid #7b707a;border-radius:2px;margin:4px 0 0;background:#fff2;cursor:pointer;display:grid;place-content:center}.paper-task input:checked::before{content:'✓';color:#765279;font:17px/1 'Segoe UI',sans-serif}.paper-task.is-done span{text-decoration:line-through;color:#999098}.paper-empty{font-size:12px;color:#8f8491;line-height:1.8}
+.paper-footer{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 10px 0 0;margin-top:auto;flex-shrink:0;color:#8d818f;font:10px 'Segoe UI','Microsoft JhengHei',sans-serif}.paper-footer small{font-size:10px}.paper-error{font-size:10px;line-height:1.5;color:#9d3e4d;margin:4px 0;flex-shrink:0;max-height:32px;overflow:auto}
+.reminder-grid .paper-note{padding:18px 21px 18px}.reminder-grid .paper-header{padding-bottom:9px}.reminder-grid .paper-title{font-size:21px!important;margin:10px 0 5px}.reminder-grid .paper-task{font-size:15px;line-height:1.5;margin:8px 0}.reminder-grid .paper-task input{width:15px;height:15px;margin-top:3px}.reminder-grid .paper-footer{padding-top:8px}
+body.sticky-mode{background:transparent!important;height:100vh;padding:12px;overflow:hidden;color-scheme:light}body.sticky-mode .paper-wrap{width:100%;height:100%}body.sticky-mode .paper-note{width:100%;height:100%;aspect-ratio:1}body.sticky-mode .paper-header{-webkit-app-region:drag}body.sticky-mode .paper-header button{-webkit-app-region:no-drag}body.sticky-mode .paper-title{font-size:24px!important}body.sticky-mode .paper-task{font-size:18px}
+@media(max-width:870px){.reminder-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.reminder-switches{font-size:10px;gap:10px}}
+
+.paper-note .paper-resize{position:absolute;right:16px;bottom:13px;width:24px;height:24px;padding:0;font-size:17px;cursor:nwse-resize;touch-action:none;-webkit-app-region:no-drag;z-index:4}
+body.sticky-mode .paper-footer{padding-right:28px}
+@media(max-width:310px){body.sticky-mode .paper-note{padding:16px 15px 18px}body.sticky-mode .paper-brand{display:none}body.sticky-mode .paper-header{padding-bottom:7px;letter-spacing:0}body.sticky-mode .paper-title{font-size:18px!important;line-height:1.3;margin:8px 0 4px;-webkit-line-clamp:1}body.sticky-mode .paper-task{font-size:15px;line-height:1.5;margin:7px 0}body.sticky-mode .paper-footer{padding-top:6px}}
+
+/* FLUX paper: clean cool-gray stock, graphite ink and a restrained chrome edge. */
+.paper-wrap{filter:drop-shadow(0 10px 14px #0006)}
+.paper-note{padding:20px 21px 18px;color:#292b34;background:linear-gradient(145deg,#f8f9fc 0%,#edeef2 68%,#dfe1e8 100%);border:1px solid #ffffffcc}
+.paper-note::before{background:linear-gradient(90deg,transparent 0 17px,#a3a5b027 18px,transparent 19px),url('assets/paper-grain.svg');opacity:.65}
+.paper-note::after{background:linear-gradient(135deg,#d4d6df 32%,#fff 48%,#a4a8b4 52%,#e6e7ee 80%)}
+.paper-clip{left:13px;top:1px;width:33px;height:9px;clip-path:none;border-radius:20px;background:linear-gradient(180deg,#2c2c37,#faf8ff 35%,#62626f 65%,#292932);filter:drop-shadow(0 2px 2px #0005)}
+.paper-header{padding:5px 0 11px;border-bottom:1px solid #8c8e9c55;color:#777985;font-size:10px;letter-spacing:1.4px}
+.paper-brand{font-size:11px;font-weight:750;letter-spacing:2px;color:#34343e}
+.paper-title,.reminder-grid .paper-title,body.sticky-mode .paper-title{font-family:'Segoe UI','Microsoft JhengHei',sans-serif!important;font-weight:700;font-size:19px!important;line-height:1.35;letter-spacing:.2px!important;color:#2d2d38!important;margin:13px 0 8px}
+.paper-task,.reminder-grid .paper-task,body.sticky-mode .paper-task{font:14px/1.55 'Segoe UI','Microsoft JhengHei',sans-serif;color:#444550;margin:8px 0;gap:8px}
+.paper-task input{border-color:#777482;border-radius:4px;width:16px;height:16px}.paper-task input:checked{background:#6e557e;border-color:#6e557e}.paper-task input:checked::before{color:white;font-size:13px}
+.paper-task.is-done span{color:#94929c}.paper-footer{border-top:1px solid #9996a32c;padding-top:9px;color:#8a8591}.paper-footer .paper-edit-button{color:#634873;font-weight:700;margin-right:auto}.paper-footer small{white-space:nowrap}
+.paper-note [hidden]{display:none!important}
+.paper-editor{display:flex;flex-direction:column;flex:1;min-height:0;gap:5px;padding-top:7px}.paper-editor label{display:flex;flex-direction:column;gap:3px;min-height:0;font:10px 'Segoe UI','Microsoft JhengHei',sans-serif;color:#777481;letter-spacing:.2px}.paper-editor .paper-edit-body-label{flex:1}.paper-editor input,.paper-editor textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ada9b7;border-radius:5px;background:#ffffff9c;color:#25232c;font:13px/1.4 'Segoe UI','Microsoft JhengHei',sans-serif;padding:5px 7px;-webkit-app-region:no-drag}.paper-editor textarea{resize:none;flex:1;min-height:40px}.paper-editor input:focus,.paper-editor textarea:focus{outline:2px solid #9b7ca8}.paper-edit-actions{display:flex;justify-content:flex-end;gap:6px}.paper-note .paper-save{background:#514558;color:white;padding:5px 12px}.paper-note .paper-save:hover{background:#6e5578;color:white}.paper-edit-actions button{padding:5px 9px}
+@media(max-width:310px){body.sticky-mode .paper-note{padding:13px 14px 15px}body.sticky-mode .paper-brand{display:inline}body.sticky-mode .paper-header{font-size:9px;letter-spacing:0;padding:3px 0 7px}body.sticky-mode .paper-header-actions{gap:0}body.sticky-mode .paper-title{font-size:17px!important;margin:8px 0 4px}body.sticky-mode .paper-task{font-size:13px;line-height:1.4;margin:6px 0}.paper-editor{gap:3px;padding-top:4px}.paper-editor input,.paper-editor textarea{font-size:12px;padding:3px 5px}.paper-footer{font-size:9px}}
+
+.paper-edit-actions{padding-right:26px;padding-bottom:3px}
+/* Web controls remain comfortably tappable on iPhone. */
+#reminder-section [hidden]{display:none!important}
+#reminder-section .reminder-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:24px}
+#reminder-section .paper-note{box-sizing:border-box;min-height:330px;max-height:440px}
+#reminder-section .paper-note button{min-height:40px}
+#reminder-section .paper-task{min-height:36px;align-items:center}
+#reminder-section .paper-task input{flex:none;width:22px;height:22px;margin:0}
+#reminder-section .paper-editor input,#reminder-section .paper-editor textarea{font-size:16px}
+#reminder-section .paper-header-actions{margin-left:auto}
+#reminder-section .reminder-switches input{width:20px;height:20px}
+@media(max-width:600px){#reminder-section .reminder-grid{grid-template-columns:minmax(0,1fr)}#reminder-section .paper-note{aspect-ratio:auto;height:360px}#reminder-section .paper-title{font-size:20px!important}}
