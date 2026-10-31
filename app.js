@@ -1,3 +1,4 @@
+import {mountLinkLibrary,isLinkCollection} from './link-library.mjs';
 import {mountReminders} from './reminder-board.js';
 import {mountAdvice} from './model-advice-ui.js';
 import {proposeEvent} from './calendar.js';
@@ -10,6 +11,7 @@ const PREFS = 'flux.web.preferences.v1', SECRETS = 'flux.web.secrets.v1', DRAFT 
 let store, view = 'capture', selectedTag = '', editingId = null, editorDirty = false, syncBusy = false, toastTimer;
 let settings = {model:DEFAULT_MODEL,autoAI:true,autoSync:true,syncUrl:'',remember:false,geminiKey:'',syncToken:''};
 const reminders=mountReminders({getStore:()=>store,report,changed:()=>{render();if(settings.autoSync&&navigator.onLine)void sync(true);}});
+const linkLibrary=mountLinkLibrary({root:$('view-links'),getNotes:()=>store?.all(),edit:openEditor,openLink:url=>window.open(url,'_blank','noopener,noreferrer'),report});
 const working = new Set();
 let aiQueue = Promise.resolve();
 const transfers=mountTransfers({request:(action,payload)=>transferRequest(settings,action,payload),openLink:url=>window.open(url,'_blank','noopener,noreferrer')});
@@ -58,10 +60,10 @@ function updateStatus() {
   $('ai-capture-hint').textContent = settings.geminiKey ? (settings.autoAI ? '收錄後自動整理標題、摘要與標籤。隨時可以修改。' : '已連上 Gemini。開啟紀錄，按「AI 整理」即可。') : '連上 Gemini，讓標題、摘要與標籤自動成形。';
 }
 function switchView(next, focus = false) {
-  view = ['capture','library','archive','trash','calendar','settings'].includes(next) ? next : 'capture';
-  for (const name of ['capture','library','calendar','settings']) $('view-'+name).hidden = (['archive','trash'].includes(view) ? 'library' : view) !== name;
+  view = ['capture','library','links','archive','trash','calendar','settings'].includes(next) ? next : 'capture';
+  for (const name of ['capture','library','links','calendar','settings']) $('view-'+name).hidden = (['archive','trash'].includes(view) ? 'library' : view) !== name;
   document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === view));
-  const title = {capture:'快速收錄',library:'所有紀錄',archive:'封存紀錄',trash:'垃圾桶',calendar:'今日行程',settings:'設定與連線'}[view];
+  const title = {capture:'快速收錄',links:'連結收藏／每日小報',library:'所有紀錄',archive:'封存紀錄',trash:'垃圾桶',calendar:'今日行程',settings:'設定與連線'}[view];
   $('breadcrumb').replaceChildren(document.createTextNode('工作區 '),Object.assign(document.createElement('span'),{textContent:'/'}),document.createTextNode(' '+title));
   $('library-title').firstChild.textContent = view === 'trash' ? '垃圾桶' : view === 'archive' ? '封存紀錄' : '所有紀錄';
   $('library-description').textContent = view === 'trash' ? '已刪除的紀錄可在這裡還原；刪除狀態會同步。' : view === 'archive' ? '留在這裡，需要時隨時還原。' : '每一個想法，都能接著往下走。';
@@ -93,9 +95,10 @@ function render() {
   if (!store) return;
   try {
     const notes=store.all().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)), active=notes.filter(n=>!n.archived&&!n.manual?.deleted);
-    $('side-count').textContent=active.length; $('recent-count').textContent=String(active.length).padStart(2,'0');
-    $('recent-list').replaceChildren(...active.slice(0,3).map(card)); if(!active.length)empty($('recent-list'),'new');
+    $('side-count').textContent=active.length; $('recent-count').textContent=String(active.filter(n=>!isLinkCollection(n)).length).padStart(2,'0');
+    $('recent-list').replaceChildren(...active.filter(n=>!isLinkCollection(n)).slice(0,3).map(card)); if(!active.some(n=>!isLinkCollection(n)))empty($('recent-list'),'new');
     $('reminder-section').hidden=view!=='capture';reminders.render();
+    if(view==='links')linkLibrary.render();
     if(!['library','archive','trash'].includes(view))return;
     let matches=notes.filter(n=>view==='trash'?Boolean(n.manual?.deleted):!n.manual?.deleted && n.archived === (view==='archive'));
     $('library-count').textContent=String(matches.length).padStart(2,'0');
