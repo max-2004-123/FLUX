@@ -95,7 +95,7 @@ function render() {
     const notes=store.all().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)), active=notes.filter(n=>!n.archived&&!n.manual?.deleted);
     $('side-count').textContent=active.length; $('recent-count').textContent=String(active.length).padStart(2,'0');
     $('recent-list').replaceChildren(...active.slice(0,3).map(card)); if(!active.length)empty($('recent-list'),'new');
-    $('reminder-section').hidden=view!=='library';reminders.render();
+    $('reminder-section').hidden=view!=='capture';reminders.render();
     if(!['library','archive','trash'].includes(view))return;
     let matches=notes.filter(n=>view==='trash'?Boolean(n.manual?.deleted):!n.manual?.deleted && n.archived === (view==='archive'));
     $('library-count').textContent=String(matches.length).padStart(2,'0');
