@@ -1,3 +1,4 @@
+import {mountAutoSync} from './auto-sync.js';
 import {mountLinkLibrary,isLinkCollection} from './link-library.mjs';
 import {mountReminders} from './reminder-board.js';
 import {mountAdvice} from './model-advice-ui.js';
@@ -216,3 +217,5 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catc
 if(settings.autoSync&&settings.syncUrl&&settings.syncToken&&navigator.onLine)void sync(true);
 
 $('restore-reminder').addEventListener('click',()=>{try{const n=store.get(editingId);if(!n)return;const restored=store.change(n.id,{manual:{...n.manual,reminderRemoved:false}});$('restore-reminder').hidden=true;render();toast('便利貼已恢復。');if(settings.autoSync&&navigator.onLine)void sync(true);}catch(e){report(e);}});
+
+mountAutoSync({window,document,enabled:()=>Boolean(store&&settings.autoSync&&settings.syncUrl&&settings.syncToken),sync});
