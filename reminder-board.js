@@ -4,11 +4,18 @@ const model=globalThis.FluxReminders;
 const preference='flux.web.reminder-board.v1';
 export function mountReminders({getStore,changed,report}) {
   const grid=document.getElementById('reminder-notes'),toggle=document.getElementById('show-reminder-board');
+  const collapsed=new Set();
+  const heading=document.querySelector('#reminder-section h2'),sectionButton=document.createElement('button');
+  sectionButton.type='button';sectionButton.className='reminder-section-toggle';
+  while(heading.firstChild)sectionButton.append(heading.firstChild);heading.append(sectionButton);
+  sectionButton.setAttribute('aria-controls','reminder-notes');
+  sectionButton.addEventListener('click',()=>{toggle.checked=!toggle.checked;toggle.dispatchEvent(new Event('change'));});
   try{toggle.checked=localStorage.getItem(preference)!=='hidden';}catch{}
   toggle.addEventListener('change',()=>{try{localStorage.setItem(preference,toggle.checked?'visible':'hidden');render();}catch(e){report(e);}});
   function active(id){const note=getStore().get(id);if(!model.isReminder(note))throw new Error('便條已更新或移除，請重新開啟原紀錄。');return note;}
   function render(){
     const store=getStore();if(!store)return;
+    sectionButton.setAttribute('aria-expanded',String(toggle.checked));
     const notes=store.all().filter(model.isReminder).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
     document.getElementById('reminder-count').textContent=notes.length+' 張';grid.hidden=!toggle.checked;
     document.getElementById('reminder-hint').hidden=!toggle.checked;
@@ -20,6 +27,15 @@ export function mountReminders({getStore,changed,report}) {
       save(input){const latest=active(note.id);if(latest.body!==input.originalBody||latest.title!==input.originalTitle)throw new Error('這則紀錄已在其他地方修改。請保留草稿，取消後重新開啟。');store.save({id:note.id,title:input.title,body:input.body});changed();},
       refresh:render
     }));
+    for(const card of cards){
+      if(card.dataset.editing==='true')continue;
+      const id=card.dataset.noteId,old=card.querySelector('.paper-title'),button=old.cloneNode(true);old.replaceWith(button);
+      const content=card.querySelector('.paper-tasks'),footer=card.querySelector('.paper-footer');
+      content.id='reminder-tasks-'+id;button.setAttribute('aria-controls',content.id);button.title='展開或收合便條';
+      const update=()=>{const closed=collapsed.has(id);button.setAttribute('aria-expanded',String(!closed));content.hidden=closed;footer.hidden=closed;card.classList.toggle('paper-collapsed',closed);};
+      button.addEventListener('click',()=>{collapsed.has(id)?collapsed.delete(id):collapsed.add(id);update();});update();
+      card.querySelector('.paper-edit-button').addEventListener('click',()=>{button.hidden=true;});
+    }
     for(const [id,node] of editing)if(!notes.some(n=>n.id===id))cards.push(node);
     // Preserve live editor nodes so sync updates cannot erase a draft or focus.
     for(const node of [...grid.children])if(!cards.includes(node))node.remove();

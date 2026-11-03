@@ -48,3 +48,11 @@ body.sticky-mode .paper-footer{padding-right:28px}
 #reminder-section .paper-header-actions{margin-left:auto}
 #reminder-section .reminder-switches input{width:20px;height:20px}
 @media(max-width:600px){#reminder-section .reminder-grid{grid-template-columns:minmax(0,1fr)}#reminder-section .paper-note{aspect-ratio:auto;height:360px}#reminder-section .paper-title{font-size:20px!important}}
+
+.reminder-section-toggle{background:none;border:0;color:inherit;font:inherit;padding:8px 0;cursor:pointer;text-align:left}
+.reminder-section-toggle::before,.paper-title[aria-expanded]::before{content:'▾';display:inline-block;margin-right:8px}
+.reminder-section-toggle[aria-expanded="false"]::before,.paper-title[aria-expanded="false"]::before{content:'▸'}
+#reminder-section .reminder-grid{align-items:start}
+#reminder-section .paper-collapsed .paper-note{height:auto;min-height:0;aspect-ratio:auto;padding-bottom:20px}
+#reminder-section .paper-collapsed .paper-title{margin-bottom:0}
+.reminder-section-toggle:focus-visible{outline:2px solid #ba95d0;outline-offset:4px}
