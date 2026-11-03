@@ -34,3 +34,19 @@ html[data-theme=cloud] :is(.reminder-hint,.reminder-switches,.composer-footer>sp
 html[data-theme=cloud] #quick-body::placeholder{color:#687694}
 html[data-theme=cloud] .sync-button{background:linear-gradient(#e5eaf2,#cdd8e8)}
 html[data-theme=cloud] .composer textarea{background:transparent}
+/* Cloud theme: link library, calendar, dialogs and transfers. */
+html[data-theme=cloud] :is(.link-heading h2,.link-entry h3,.agenda-body h2,.transfer-heading h2,.transfer-toolbar h3){color:#344362}
+html[data-theme=cloud] :is(.link-heading p,.link-hint,.link-setup,.link-eyebrow,.link-description,.link-url,.link-state,.digest-body,.digest-reading summary,.link-empty,.agenda-toolbar>label,.agenda-status,.agenda-time,.agenda-body p,.event-warning,.event-result,.event-result strong,.desktop-calendar .field-help,#event-dialog .field-help,#event-fields>label,.event-time-grid>label,#event-fields .event-all-day,.transfer-heading small,.transfer-heading p,.transfer-note,.transfer-drop p,.transfer-status,.transfer-file small,.transfer-job small){color:#52617d}
+html[data-theme=cloud] :is(.link-day,.agenda-item,.event-result,.transfer-drop){background:#fffaf1e8;border-color:#bac6d7;color:#344362;box-shadow:0 8px 24px #63769b0e}
+html[data-theme=cloud] :is(.link-day>summary,.link-entry,.transfer-file,.transfer-job){color:#344362;border-color:#c5cddd}
+html[data-theme=cloud] :is(.link-toolbar button,.link-actions button,.desktop-calendar .button,#event-dialog .button,.flux-transfer button){background:#e5ebf2;border:1px solid #afbdd2;color:#394d70}
+html[data-theme=cloud] :is(.link-tabs [aria-pressed=true],.flux-transfer .transfer-pick,.desktop-calendar .metallic,#event-dialog .metallic){background:#cad8e9;color:#304466;border-color:#93a8c5}
+html[data-theme=cloud] :is(.link-toolbar input,.desktop-calendar input,#event-fields input:not([type=checkbox]),#event-fields textarea){background:#fffcf5;color:#344362;border-color:#aabbd0}
+html[data-theme=cloud] .flux-transfer{background:linear-gradient(#faf7f0f5,#e5eaf0f5),url('assets/cloud-sea.webp') center/cover;color:#344362;border-color:#abb9ce;box-shadow:0 22px 80px #3f4d6a55}
+html[data-theme=cloud] .flux-transfer::backdrop,html[data-theme=cloud] dialog::backdrop{background:#26365388}
+html[data-theme=cloud] .transfer-drop.drag-over{background:#c8d8eccc}
+html[data-theme=cloud] .flux-transfer .transfer-cancel{color:#874b5e;border-color:#bc8b9b}
+html[data-theme=cloud] :is(.desktop-calendar .text-link,#event-dialog .text-link){color:#455d8a}
+html[data-theme=cloud] :is(.settings-tabs button.selected,.model-advice-panel summary){color:#344c78;border-color:#7485ae}
+html[data-theme=cloud] :is(.notice,.model-advice-panel,.settings-panel,.help-panel){color:#485978}
+html[data-theme=cloud] :is(.editor-actions button,.dialog-actions button,.close,.icon-button){color:#405575}
