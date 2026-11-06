@@ -103,10 +103,11 @@ function render() {
     if(!['library','archive','trash'].includes(view))return;
     let matches=notes.filter(n=>view==='trash'?Boolean(n.manual?.deleted):!n.manual?.deleted && n.archived === (view==='archive'));
     $('library-count').textContent=String(matches.length).padStart(2,'0');
-    const tags=[...new Set(matches.flatMap(n=>n.tags))].sort((a,b)=>a.localeCompare(b));
+    const counts=new Map();for(const note of matches)for(const tag of new Set(note.tags))counts.set(tag,(counts.get(tag)||0)+1);
+    const tags=[...counts].filter(([,count])=>count>5).map(([tag])=>tag).sort((a,b)=>a.localeCompare(b));
     if(!tags.includes(selectedTag))selectedTag='';
     $('tag-filters').replaceChildren();
-    if(tags.length){for(const tag of ['',...tags]) {const b=el('button',selectedTag===tag?'active':'',tag||'全部標籤');b.setAttribute('aria-pressed',String(selectedTag===tag));b.addEventListener('click',()=>{selectedTag=tag;render();});$('tag-filters').append(b);}}
+    {for(const tag of ['',...tags]) {const b=el('button',selectedTag===tag?'active':'',tag||'全部標籤');b.setAttribute('aria-pressed',String(selectedTag===tag));b.addEventListener('click',()=>{selectedTag=tag;render();});$('tag-filters').append(b);}}
     const q=$('search').value.trim().toLocaleLowerCase(),type=$('type-filter').value;
     matches=matches.filter(n=>(!q || [n.body,n.title,n.summary,...n.tags].join('\n').toLocaleLowerCase().includes(q)) && (!selectedTag || n.tags.includes(selectedTag)) && (type==='all' || type==='link'&&n.url || type==='text'&&!n.url || type==='pending'&&n.aiStatus!=='done'));
     $('library-list').replaceChildren(...matches.map(card));
