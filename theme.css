@@ -166,17 +166,17 @@ html[data-theme=stellar] :is(.button.subtle,.secondary,.sync-button,.text-button
 html[data-theme=stellar] :is(.text-link,.help-panel a,.help-panel code){color:#ebcb83}
 html[data-theme=stellar] :is(.badge,.card-tag,.tag,.type-icon,.ai-badge,kbd,.tag-list button,.tag-filters button,.note-tags span){color:#c5d8d8;background:#34445f;border-color:#8ea6c477}
 html[data-theme=stellar] :is(.tag-list button.active,.tag-filters button.active){color:#e8dbbe;background:#3b4948;border-color:#ebcb83}
-html[data-theme=stellar] :is(.paper-note,.reminder-grid .paper-note){color-scheme:dark;color:#f5f2e9;background:linear-gradient(140deg,#2c4852,#1d3641);border-color:#8ea6c477}
+html[data-theme=stellar] :is(.paper-note,.reminder-grid .paper-note){color-scheme:dark;color:#f5f2e9;background:linear-gradient(140deg,#34445f,#252f45);border-color:#8ea6c477}
 html[data-theme=stellar] .paper-note::before{background:none;box-shadow:inset 1px 0 #ebcb83,inset 0 1px #8ea6c455}
-html[data-theme=stellar] .paper-note::after{background:linear-gradient(135deg,#182d38,#8ea6c4,#34445f)}
+html[data-theme=stellar] .paper-note::after{background:linear-gradient(135deg,#202b3e,#8ea6c4,#34445f)}
 html[data-theme=stellar] .paper-title{color:#e3ebe8!important}
-html[data-theme=stellar] :is(.paper-header,.paper-brand,.paper-footer,.paper-note button,.paper-empty){color:#afc4c6;border-color:#8ea6c459}
+html[data-theme=stellar] :is(.paper-header,.paper-brand,.paper-footer,.paper-note button,.paper-empty){color:#bac8da;border-color:#8ea6c459}
 html[data-theme=stellar] .paper-task{color:#f5f2e9}
-html[data-theme=stellar] .paper-task.is-done span{color:#95acb1}
-html[data-theme=stellar] .paper-task input{border-color:#a8bdbb;background:#10252e}
+html[data-theme=stellar] .paper-task.is-done span{color:#bac8da}
+html[data-theme=stellar] .paper-task input{border-color:#bac8da;background:#202b3e}
 html[data-theme=stellar] .paper-task input:checked{background:#ebcb83;border-color:#ebcb83}
 html[data-theme=stellar] .paper-task input:checked::before{color:#111c2c}
-html[data-theme=stellar] .paper-clip{background:linear-gradient(135deg,#69838a,#ebcb83,#1b323d)}
+html[data-theme=stellar] .paper-clip{background:linear-gradient(135deg,#8ea6c4,#ebcb83,#34445f)}
 html[data-theme=stellar] :is(.paper-save,#toast){background:#c2d4d4;color:#142b35}
 html[data-theme=stellar] :is(.paper-error,#toast.error,.event-warning){color:#edb8ae}
 html[data-theme=stellar] #toast.error{background:#462f32;border-color:#af7774}
@@ -227,6 +227,8 @@ html[data-theme=stellar] *{scrollbar-color:#8ea6c4 #202b3e}
 html[data-theme=stellar] :is(.note-ai,.page-heading p,.search>span,.theme-settings p){color:#bac8da}
 html[data-theme=stellar] .sync-button{background:linear-gradient(145deg,#34445f,#1b323d)}
 @media(max-width:600px){html[data-theme=stellar] body{background-attachment:scroll;background-position:65% top}}
+
+.flux-inline-icon{display:inline-block;vertical-align:middle;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
 html[data-theme=stellar] :is(.hero h1,.greeting h1){font-family:inherit;letter-spacing:.04em;font-weight:600}
 html[data-theme=stellar] .hero{background:radial-gradient(ellipse at 80% 50%,#8ea6c422,transparent 65%)}
